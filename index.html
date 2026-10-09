@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Secret Golf Tour — golf's wildest stories, legends, influencers, swing analysis and entertainment.">
+  <meta name="description" content="Secret Golf Tour — golf's wildest stories, legends, influencers, swing analysis and entertainment. Watch golf videos and discover the people shaping the game.">
   <meta name="theme-color" content="#06120d">
   <title>Secret Golf Tour | Golf's Wildest Stories</title>
   <link rel="stylesheet" href="style.css">
@@ -11,17 +11,13 @@
 <body>
 <header class="header">
   <div class="nav">
-    <a class="logo" href="#home">
-      <span class="logo-mark">SG</span>
-      <span><b>SECRET GOLF</b><small>TOUR</small></span>
+    <a class="logo" href="#home" aria-label="Secret Golf Tour home">
+      <span class="logo-mark">SG</span><span><b>SECRET GOLF</b><small>TOUR</small></span>
     </a>
-    <button class="menu" aria-label="Menu">☰</button>
+    <button class="menu" aria-label="Open navigation menu" aria-expanded="false">☰</button>
     <nav>
-      <a href="#home">Home</a>
-      <a href="#videos">Videos</a>
-      <a href="#categories">Categories</a>
-      <a href="#about">About</a>
-      <a class="sub" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener">Subscribe</a>
+      <a href="#home">Home</a><a href="#videos">All Videos</a><a href="#categories">Categories</a><a href="#about">About</a>
+      <a class="sub" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener noreferrer">Subscribe</a>
     </nav>
   </div>
 </header>
@@ -33,77 +29,55 @@
     <h1>GOLF'S WILDEST<br><span>STORIES.</span></h1>
     <p>Discover golf personalities, influencer culture, swing stories, legends and the moments that make the game impossible to ignore.</p>
     <div class="buttons">
-      <a class="btn gold" href="#videos">▶ WATCH VIDEOS</a>
-      <a class="btn outline" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener">SUBSCRIBE ON YOUTUBE ↗</a>
+      <a class="btn gold" href="#videos">▶ EXPLORE VIDEOS</a>
+      <a class="btn outline" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener noreferrer">SUBSCRIBE ON YOUTUBE ↗</a>
     </div>
   </div>
-  <div class="hero-note">SECRET GOLF TOUR • EST. 2026</div>
+  <div class="hero-note">SECRET GOLF TOUR • GOLF ENTERTAINMENT</div>
 </section>
 
 <section class="intro section">
-  <div class="intro-copy">
-    <p class="eyebrow">WELCOME TO SECRET GOLF TOUR</p>
-    <h2>Where golf meets entertainment.</h2>
-    <p>From rising golf influencers to legendary players, swing analysis and dramatic golf stories, Secret Golf Tour explores the people and moments shaping modern golf.</p>
+  <div class="intro-copy"><p class="eyebrow">WELCOME TO SECRET GOLF TOUR</p><h2>Where golf meets entertainment.</h2>
+    <p>From golf influencers to LPGA and KLPGA players, swing analysis and dramatic golf stories, explore the people and moments shaping modern golf.</p>
   </div>
   <div class="stat"><strong>GOLF</strong><span>STORIES<br>WITHOUT<br>LIMITS</span></div>
 </section>
 
 <section id="videos" class="playlist section">
   <div class="heading">
-    <div><p class="eyebrow">WATCH THE COLLECTION</p><h2>Latest Golf Videos</h2></div>
-    <a class="watch-link" href="https://www.youtube.com/playlist?list=PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n" target="_blank" rel="noopener">Open Playlist ↗</a>
+    <div><p class="eyebrow">YOUR GOLF VIDEO LIBRARY</p><h2>All Videos</h2><p class="heading-copy">Choose a story, then watch it on YouTube.</p></div>
+    <a class="watch-link" href="https://www.youtube.com/playlist?list=PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n" target="_blank" rel="noopener noreferrer">Open YouTube Playlist ↗</a>
   </div>
-  <div class="player">
-    <iframe
-      src="https://www.youtube-nocookie.com/embed/videoseries?list=PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n&rel=0"
-      title="Secret Golf Tour YouTube Playlist"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen></iframe>
+  <div id="status" class="status" role="status">Loading Secret Golf Tour videos…</div>
+  <div id="video-grid" class="video-grid" aria-live="polite"></div>
+  <div id="load-more-wrap" class="load-more-wrap" hidden><button id="load-more" class="btn outline">LOAD MORE VIDEOS</button></div>
+  <div id="error-help" class="error-help" hidden>
+    <h3>Videos couldn't be loaded automatically</h3>
+    <p>Check that the API key is entered in <code>script.js</code>, YouTube Data API v3 is enabled, and the key's website restriction includes this GitHub Pages site. You can still open the full playlist below.</p>
+    <a class="btn gold" href="https://www.youtube.com/playlist?list=PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n" target="_blank" rel="noopener noreferrer">WATCH PLAYLIST ON YOUTUBE ↗</a>
   </div>
-  <p class="player-note">The playlist above is connected directly to Secret Golf Tour on YouTube. Add videos to the playlist and this website can continue to use the same player.</p>
 </section>
 
 <section id="categories" class="section categories">
-  <div class="heading center"><p class="eyebrow">EXPLORE THE TOUR</p><h2>Golf Categories</h2></div>
+  <div class="heading center"><p class="eyebrow">EXPLORE THE TOUR</p><h2>Golf Categories</h2><p class="heading-copy">Find your next golf story.</p></div>
   <div class="cards">
-    <a href="#videos" class="card influencer"><span>01</span><h3>Golf Influencers</h3><p>Personalities, creators and the new generation of golf entertainment.</p></a>
-    <a href="#videos" class="card lpga"><span>02</span><h3>LPGA & KLPGA</h3><p>Women who are changing the game on and off the course.</p></a>
-    <a href="#videos" class="card swing"><span>03</span><h3>Swing Analysis</h3><p>Break down the technique, style and mechanics behind great swings.</p></a>
-    <a href="#videos" class="card stories"><span>04</span><h3>Golf Stories</h3><p>Rivalries, legends, drama and stories you won't hear everywhere.</p></a>
-  </div>
-</section>
-
-<section class="feature section">
-  <div class="feature-image"><div class="badge">SECRET GOLF<br>TOUR</div></div>
-  <div class="feature-copy">
-    <p class="eyebrow">THE SECRET GOLF TOUR EXPERIENCE</p>
-    <h2>More than a game.</h2>
-    <p>Golf has personalities. Golf has rivalries. Golf has culture. We bring those stories together in a format built for today's golf audience.</p>
-    <a class="btn gold" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener">EXPLORE THE CHANNEL ↗</a>
+    <a href="#videos" class="card influencer"><span>01</span><h3>Golf Influencers</h3><p>Personalities, creators and modern golf culture.</p></a>
+    <a href="#videos" class="card lpga"><span>02</span><h3>LPGA & KLPGA</h3><p>Players making an impact on and off the course.</p></a>
+    <a href="#videos" class="card swing"><span>03</span><h3>Swing Analysis</h3><p>Technique, style and the mechanics of a golf swing.</p></a>
+    <a href="#videos" class="card stories"><span>04</span><h3>Golf Stories</h3><p>Rivalries, legends and stories worth exploring.</p></a>
   </div>
 </section>
 
 <section id="about" class="about section">
-  <div>
-    <p class="eyebrow">ABOUT</p>
-    <h2>Welcome to<br>Secret Golf Tour.</h2>
-    <p>Secret Golf Tour is a golf entertainment channel covering female golfers, LPGA and KLPGA stories, golf influencers, swing analysis and compelling golf culture.</p>
-    <a class="btn outline" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener">VISIT YOUTUBE ↗</a>
+  <div><p class="eyebrow">ABOUT THE CHANNEL</p><h2>Welcome to<br>Secret Golf Tour.</h2>
+    <p>Secret Golf Tour covers female golfers, LPGA and KLPGA stories, golf influencers, swing analysis and compelling golf culture.</p>
+    <a class="btn gold" href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener noreferrer">VISIT OUR YOUTUBE CHANNEL ↗</a>
   </div>
 </section>
 </main>
-
-<footer>
-  <div class="foot">
-    <div><b>SECRET GOLF TOUR</b><p>Golf's Wildest Stories, Legends & Influencers</p></div>
-    <div class="links"><a href="#home">Home</a><a href="#videos">Videos</a><a href="#categories">Categories</a><a href="#about">About</a><a href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener">YouTube</a></div>
-  </div>
-  <div class="copy">© <span id="year"></span> Secret Golf Tour. All rights reserved.</div>
-</footer>
-<script>
-document.getElementById("year").textContent = new Date().getFullYear();
-document.querySelector(".menu").addEventListener("click",()=>{const n=document.querySelector("nav");n.classList.toggle("open")});
-</script>
+<footer><div class="foot"><div><b>SECRET GOLF TOUR</b><p>Golf's Wildest Stories, Legends & Influencers</p></div>
+  <div class="links"><a href="#home">Home</a><a href="#videos">All Videos</a><a href="#categories">Categories</a><a href="#about">About</a><a href="https://youtube.com/@secretgolftour" target="_blank" rel="noopener noreferrer">YouTube</a></div>
+</div><div class="copy">© <span id="year"></span> Secret Golf Tour. All rights reserved.</div></footer>
+<script src="script.js"></script>
 </body>
 </html>
