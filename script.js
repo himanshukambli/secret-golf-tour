@@ -2,6 +2,7 @@
   SECRET GOLF TOUR — AUTOMATIC YOUTUBE PLAYLIST GALLERY
   This file calls your Cloudflare Worker. Keep the YouTube API key in
   Cloudflare as a secret; never put it in this public file.
+  This version intentionally does NOT display YouTube descriptions.
 */
 
 const WORKER_URL = "https://secret-golf-playlist.kambli-himanshu.workers.dev/videos";
@@ -49,7 +50,6 @@ function renderVideos(videos) {
 
     const title = escapeHtml(video.title || "Secret Golf Tour video");
     const thumbnail = escapeHtml(getThumbnail(video));
-    const description = escapeHtml(video.description || "");
     const published = formatDate(video.publishedAt);
     const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
 
@@ -64,7 +64,6 @@ function renderVideos(videos) {
         <div class="video-info">
           <h3>${title}</h3>
           ${published ? `<p class="video-date">${escapeHtml(published)}</p>` : ""}
-          ${description ? `<p class="video-description">${description}</p>` : ""}
           <a class="watch-button" href="${watchUrl}" target="_blank"
              rel="noopener noreferrer">Watch on YouTube ↗</a>
         </div>
@@ -110,7 +109,6 @@ async function loadVideos(append = false) {
       throw new Error(data.error || `Request failed (HTTP ${response.status}).`);
     }
 
-    // Expected Worker response: { videos: [...], nextPageToken: "..." }
     const videos = Array.isArray(data.videos) ? data.videos : [];
     if (!append) {
       grid.innerHTML = "";
