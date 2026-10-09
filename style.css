@@ -35,7 +35,7 @@ nav a:hover, .text-link:hover { color: var(--gold); }
   background:
     linear-gradient(90deg, rgba(3, 13, 8, .70), rgba(3, 13, 8, .30) 55%, rgba(3, 13, 8, .45)),
     linear-gradient(0deg, rgba(3, 13, 8, .48), rgba(3, 13, 8, .08)),
-    url("https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=2400&q=85") center 48% / cover no-repeat;
+    url("assets/secret-golf-banner-background.jpg") center 48% / cover no-repeat;
   position: relative;
 }
 .eyebrow { color: var(--gold); font-size: 10px; letter-spacing: .32em; font-weight: 800; }
