@@ -7,7 +7,7 @@
 
   Playlist: PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n
 */
-const YOUTUBE_API_KEY = "PASTE_YOUR_API_KEY_HERE";
+const WORKER_URL = "https://secret-golf-playlist.kambli-himanshu.workers.dev/videos";
 const PLAYLIST_ID = "PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n";
 const PAGE_SIZE = 24;
 
@@ -59,10 +59,10 @@ function renderItems(items) {
 async function loadVideos(append = false) {
   if (loading) return;
   if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "PASTE_YOUR_API_KEY_HERE") {
-    statusBox.textContent = "The video gallery is ready, but the API key still needs to be added to script.js.";
-    errorHelp.hidden = false;
-    return;
-  }
+  statusBox.textContent = "The video gallery is ready, but the API key still needs to be added to script.js.";
+  errorHelp.hidden = false;
+  return;
+}
 
   loading = true;
   statusBox.textContent = append ? "Loading more videos…" : "Loading Secret Golf Tour videos…";
@@ -70,24 +70,37 @@ async function loadVideos(append = false) {
   loadMoreWrap.hidden = true;
 
   try {
-    const params = new URLSearchParams({
-      part: "snippet,contentDetails",
-      playlistId: PLAYLIST_ID,
-      maxResults: String(PAGE_SIZE),
-      key: YOUTUBE_API_KEY
-    });
-    if (nextPageToken) params.set("pageToken", nextPageToken);
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params.toString()}`);
-    const data = await response.json();
+    const requestUrl = new URL(WORKER_URL);
 
-    if (!response.ok || data.error) {
-      const message = data.error?.message || `YouTube API returned HTTP ${response.status}`;
-      throw new Error(message);
+if (nextPageToken) {
+  requestUrl.searchParams.set("pageToken", nextPageToken);
+}
+
+const response = await fetch(requestUrl.toString());
+const data = await response.json();
+
+if (!response.ok || data.error) {
+  throw new Error(data.error || `Request failed: ${response.status}`);
+}
+
+const items = (data.videos || []).map(video => ({
+  snippet: {
+    title: video.title,
+    description: video.description,
+    thumbnails: {
+      high: { url: video.thumbnail }
+    },
+    videoOwnerChannelTitle: "Secret Golf Tour",
+    resourceId: {
+      videoId: video.videoId
     }
+  }
+}));
 
-    if (!append) grid.innerHTML = "";
-    const items = data.items || [];
-    renderItems(items);
+nextPageToken = data.nextPageToken || "";
+renderItems(items);
+
+    
     nextPageToken = data.nextPageToken || "";
 
     const count = grid.querySelectorAll(".video-card").length;
@@ -107,7 +120,7 @@ async function loadVideos(append = false) {
 }
 
 document.getElementById("year").textContent = new Date().getFullYear();
-const menuButton = document.querySelector(".menu");
+if (p) p.textContent = "Check that the Cloudflare Worker is configured with your YouTube API secret and that the playlist is accessible.";
 menuButton.addEventListener("click", () => {
   const nav = document.querySelector("nav");
   const isOpen = nav.classList.toggle("open");
