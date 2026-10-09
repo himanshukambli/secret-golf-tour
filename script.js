@@ -7,7 +7,7 @@
 
   Playlist: PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n
 */
-const YOUTUBE_API_KEY = "AIzaSyBjw5HTyJZjyFHR4yUag2R2HvEsrD-WSFs";
+const YOUTUBE_API_KEY = "PASTE_YOUR_API_KEY_HERE";
 const PLAYLIST_ID = "PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n";
 const PAGE_SIZE = 24;
 
