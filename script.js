@@ -1,8 +1,7 @@
 /*
   SECRET GOLF TOUR — AUTOMATIC YOUTUBE PLAYLIST GALLERY
-  This file calls your Cloudflare Worker. Keep the YouTube API key in
-  Cloudflare as a secret; never put it in this public file.
-  This version intentionally does NOT display YouTube descriptions.
+  Videos play directly inside the website when a visitor clicks Play.
+  Keep the YouTube API key in Cloudflare as a secret, never in this file.
 */
 
 const WORKER_URL = "https://secret-golf-playlist.kambli-himanshu.workers.dev/videos";
@@ -43,29 +42,62 @@ function formatDate(value) {
   });
 }
 
+function playVideoInCard(card) {
+  if (!card) return;
+  const videoId = String(card.dataset.videoId || "").trim();
+  const playerWrap = card.querySelector(".inline-player");
+  if (!videoId || !playerWrap) return;
+
+  // Replace this card's thumbnail with an embedded YouTube player.
+  playerWrap.innerHTML = `
+    <iframe
+      src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0"
+      title="${escapeHtml(card.dataset.videoTitle || "Secret Golf Tour video")}"
+      loading="lazy"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen>
+    </iframe>
+  `;
+  playerWrap.hidden = false;
+
+  const thumbnailLink = card.querySelector(".video-thumb");
+  if (thumbnailLink) thumbnailLink.hidden = true;
+
+  const playButton = card.querySelector(".watch-button");
+  if (playButton) {
+    playButton.textContent = "Playing on this page";
+    playButton.disabled = true;
+    playButton.classList.add("is-playing");
+  }
+}
+
 function renderVideos(videos) {
   const html = videos.map((video) => {
     const videoId = String(video.videoId || "").trim();
     if (!videoId) return "";
 
-    const title = escapeHtml(video.title || "Secret Golf Tour video");
+    const titleRaw = video.title || "Secret Golf Tour video";
+    const title = escapeHtml(titleRaw);
     const thumbnail = escapeHtml(getThumbnail(video));
     const published = formatDate(video.publishedAt);
-    const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
 
     return `
-      <article class="video-card">
-        <a class="video-thumb" href="${watchUrl}" target="_blank"
-           rel="noopener noreferrer" aria-label="Watch ${title} on YouTube">
+      <article class="video-card"
+               data-video-id="${escapeHtml(videoId)}"
+               data-video-title="${title}">
+        <div class="inline-player" hidden></div>
+        <button class="video-thumb play-inline-button" type="button"
+                aria-label="Play ${title} on this website">
           <img src="${thumbnail}" alt="${title}" loading="lazy"
                onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg';">
-          <span class="play-badge">▶ WATCH VIDEO</span>
-        </a>
+          <span class="play-badge">▶ PLAY VIDEO</span>
+        </button>
         <div class="video-info">
           <h3>${title}</h3>
           ${published ? `<p class="video-date">${escapeHtml(published)}</p>` : ""}
-          <a class="watch-button" href="${watchUrl}" target="_blank"
-             rel="noopener noreferrer">Watch on YouTube ↗</a>
+          <button class="watch-button play-inline-button" type="button">Play on this website ▶</button>
         </div>
       </article>
     `;
@@ -153,6 +185,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!nav) return;
       const isOpen = nav.classList.toggle("open");
       menuButton.setAttribute("aria-expanded", String(isOpen));
+    });
+  }
+
+  // Event delegation supports cards loaded now and by the Load More button.
+  if (grid) {
+    grid.addEventListener("click", (event) => {
+      const button = event.target.closest(".play-inline-button");
+      if (!button) return;
+      playVideoInCard(button.closest(".video-card"));
     });
   }
 
