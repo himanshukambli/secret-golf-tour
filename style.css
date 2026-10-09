@@ -23,7 +23,21 @@ nav a { text-decoration: none; font-size: 12px; font-weight: 800; }
 nav a:hover, .text-link:hover { color: var(--gold); }
 .subscribe-link { background: var(--gold); color: #11160f; padding: 12px 19px; border-radius: 2px; }
 .menu-button { display: none; border: 1px solid var(--line); background: transparent; color: white; padding: 8px 12px; font-size: 20px; }
-.hero { min-height: 410px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: radial-gradient(ellipse at 50% 0%, rgba(69,104,62,.3), transparent 55%), linear-gradient(180deg,#071910,#06140f); }
+.hero {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 88px 24px;
+  color: #f7f7f1;
+  background:
+    linear-gradient(90deg, rgba(3, 13, 8, .70), rgba(3, 13, 8, .30) 55%, rgba(3, 13, 8, .45)),
+    linear-gradient(0deg, rgba(3, 13, 8, .48), rgba(3, 13, 8, .08)),
+    url("https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=2400&q=85") center 48% / cover no-repeat;
+  position: relative;
+}
 .eyebrow { color: var(--gold); font-size: 10px; letter-spacing: .32em; font-weight: 800; }
 .hero h1, h2, .category-copy strong { font-family: 'Barlow Condensed', Impact, sans-serif; font-weight: 800; }
 .hero h1 { font-size: clamp(48px, 8vw, 82px); line-height: .98; margin: 8px 0 14px; letter-spacing: .02em; }
@@ -95,4 +109,25 @@ nav a:hover, .text-link:hover { color: var(--gold); }
   .category-copy strong { font-size: 29px; }
   .video-info h3 { font-size: 25px; }
   .site-footer { align-items: flex-start; flex-direction: column; }
+}
+
+
+/* Hero background visibility and mobile crop */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3,13,8,.12), rgba(3,13,8,.42));
+  pointer-events: none;
+}
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 640px) {
+  .hero {
+    min-height: 390px;
+    padding: 66px 20px;
+    background-position: center, center, 58% center;
+  }
 }
