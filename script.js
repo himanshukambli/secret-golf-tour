@@ -1,184 +1,165 @@
 /*
-  SECRET GOLF TOUR — AUTOMATIC YOUTUBE PLAYLIST GALLERY
-  Inline playback: clicking a thumbnail replaces that thumbnail with the player
-  in the same card. No descriptions are shown.
-  Keep the YouTube API key in Cloudflare as a secret, never in this file.
+  SECRET GOLF TOUR — playlist gallery and category sections.
+  The YouTube API key stays in the Cloudflare Worker secret, never in this public file.
 */
-
 const WORKER_URL = "https://secret-golf-playlist.kambli-himanshu.workers.dev/videos";
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 50;
+const PLAYLIST_URL = "https://www.youtube.com/playlist?list=PL1m3Bw6VGCWR9OOpL4vE76paeqZqbmM1n";
 
-const grid = document.getElementById("video-grid");
-const statusBox = document.getElementById("status");
-const loadMoreWrap = document.getElementById("load-more-wrap");
-const errorHelp = document.getElementById("error-help");
-
-let nextPageToken = "";
-let loading = false;
+const state = { videos: [], nextPageToken: "", loading: false };
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
 }
-
-function getThumbnail(video) {
-  return video.thumbnail ||
-    `https://i.ytimg.com/vi/${encodeURIComponent(video.videoId)}/hqdefault.jpg`;
+function thumbFor(video) {
+  return video.thumbnail || `https://i.ytimg.com/vi/${encodeURIComponent(video.videoId)}/hqdefault.jpg`;
 }
-
-function formatDate(value) {
+function dateFor(value) {
   if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric"
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+function renderCard(video) {
+  const id = String(video.videoId || "").trim();
+  if (!id) return "";
+  const title = escapeHtml(video.title || "Secret Golf Tour video");
+  return `
+    <article class="video-card" data-video-id="${escapeHtml(id)}" data-video-title="${title}">
+      <div class="inline-player" hidden></div>
+      <button class="video-thumb play-inline-button" type="button" aria-label="Play ${title} on this website">
+        <img src="${escapeHtml(thumbFor(video))}" alt="${title}" loading="lazy">
+        <span class="play-badge">▶ PLAY VIDEO</span>
+      </button>
+      <div class="video-info">
+        <h3>${title}</h3>
+        ${video.publishedAt ? `<p class="video-date">${escapeHtml(dateFor(video.publishedAt))}</p>` : ""}
+        <button class="watch-button play-inline-button" type="button">Play on this website ▶</button>
+      </div>
+    </article>`;
+}
+function playInCard(card) {
+  const id = card?.dataset.videoId;
+  if (!id) return;
+  const player = card.querySelector(".inline-player");
+  const thumb = card.querySelector(".video-thumb");
+  const watch = card.querySelector(".watch-button");
+  player.hidden = false;
+  player.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0"
+    title="${escapeHtml(card.dataset.videoTitle || "Secret Golf Tour video")}"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+  thumb.hidden = true;
+  if (watch) watch.hidden = true;
+}
+function mountCards(element, videos) {
+  if (!element) return;
+  element.innerHTML = videos.map(renderCard).join("");
+}
+function videoMatches(video, terms) {
+  const title = String(video.title || "").toLowerCase();
+  return terms.some(term => title.includes(term));
+}
+function fillCategorySections() {
+  // Each section is populated from the same playlist, filtered by title keywords.
+  const groups = [
+    { grid: "influencers-grid", note: "influencers-note", terms: ["influencer", "viral", "creator", "grace charis", "paige spiranac", "charley hull", "female golfers", "golf star"], fallback: true, label: "Golf influencer" },
+    { grid: "lpga-grid", note: "lpga-note", terms: ["lpga", "klpga", "tour", "charley hull", "nelly korda", "paige", "professional golfer", "golf swing"], fallback: true, label: "LPGA & KLPGA" },
+    { grid: "swing-grid", note: "swing-note", terms: ["swing", "technique", "swing analysis", "how to", "golf tips"], fallback: false, label: "swing analysis" },
+    { grid: "stories-grid", note: "stories-note", terms: ["story", "stories", "legend", "rivalry", "career", "journey", "champion"], fallback: false, label: "golf story" }
+  ];
+  groups.forEach(group => {
+    const target = document.getElementById(group.grid);
+    const note = document.getElementById(group.note);
+    const matches = state.videos.filter(video => videoMatches(video, group.terms));
+    // Avoid empty category panels when titles do not contain a category keyword:
+    // show the first few playlist items as useful category discovery cards.
+    const selected = matches.length ? matches.slice(0, 12) : (group.fallback ? state.videos.slice(0, 12) : []);
+    mountCards(target, selected);
+    if (note) {
+      note.textContent = selected.length
+        ? `${selected.length} ${group.label} video${selected.length === 1 ? "" : "s"} shown from the playlist.`
+        : `No clearly matching ${group.label} titles were found in the current playlist. Try All Videos below.`;
+    }
   });
 }
-
-function playVideoInCard(card) {
-  if (!card) return;
-  const videoId = String(card.dataset.videoId || "").trim();
-  const playerWrap = card.querySelector(".inline-player");
-  const thumbnailButton = card.querySelector(".video-thumb");
-  const playButton = card.querySelector(".watch-button");
-  if (!videoId || !playerWrap) return;
-
-  // Explicit inline styles override any site CSS that may override the [hidden] attribute.
-  playerWrap.hidden = false;
-  playerWrap.style.display = "block";
-  playerWrap.style.width = "100%";
-  playerWrap.style.aspectRatio = "16 / 9";
-  playerWrap.style.position = "relative";
-  playerWrap.style.overflow = "hidden";
-  playerWrap.style.background = "#000";
-
-  playerWrap.innerHTML = `
-    <iframe
-      src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0"
-      title="${escapeHtml(card.dataset.videoTitle || "Secret Golf Tour video")}"
-      style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block;"
-      loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerpolicy="strict-origin-when-cross-origin"
-      allowfullscreen>
-    </iframe>`;
-
-  // Hide the clicked thumbnail so the player occupies exactly its place.
-  if (thumbnailButton) {
-    thumbnailButton.hidden = true;
-    thumbnailButton.style.display = "none";
-  }
-  if (playButton) {
-    playButton.textContent = "Playing on this page";
-    playButton.disabled = true;
-    playButton.style.display = "none";
-  }
-}
-
-function renderVideos(videos) {
-  const html = videos.map((video) => {
-    const videoId = String(video.videoId || "").trim();
-    if (!videoId) return "";
-
-    const title = escapeHtml(video.title || "Secret Golf Tour video");
-    const thumbnail = escapeHtml(getThumbnail(video));
-    const published = formatDate(video.publishedAt);
-
-    return `
-      <article class="video-card"
-               data-video-id="${escapeHtml(videoId)}"
-               data-video-title="${title}">
-        <div class="inline-player" hidden style="display:none"></div>
-        <button class="video-thumb play-inline-button" type="button"
-                aria-label="Play ${title} on this website">
-          <img src="${thumbnail}" alt="${title}" loading="lazy">
-          <span class="play-badge">▶ PLAY VIDEO</span>
-        </button>
-        <div class="video-info">
-          <h3>${title}</h3>
-          ${published ? `<p class="video-date">${escapeHtml(published)}</p>` : ""}
-          <button class="watch-button play-inline-button" type="button">Play on this website ▶</button>
-        </div>
-      </article>`;
-  }).join("");
-
-  if (html) grid.insertAdjacentHTML("beforeend", html);
-}
-
-async function loadVideos(append = false) {
-  if (loading || !grid || !statusBox) return;
-  loading = true;
-  statusBox.textContent = append ? "Loading more videos…" : "Loading Secret Golf Tour videos…";
-  if (errorHelp) errorHelp.hidden = true;
-  if (loadMoreWrap) loadMoreWrap.hidden = true;
-
+async function loadPlaylist() {
+  const status = document.getElementById("status");
+  const grid = document.getElementById("video-grid");
+  const moreWrap = document.getElementById("load-more-wrap");
+  const help = document.getElementById("error-help");
+  if (state.loading) return;
+  state.loading = true;
+  if (status) status.textContent = "Loading Secret Golf Tour videos…";
   try {
-    const requestUrl = new URL(WORKER_URL);
-    requestUrl.searchParams.set("maxResults", String(PAGE_SIZE));
-    if (nextPageToken) requestUrl.searchParams.set("pageToken", nextPageToken);
-
-    const response = await fetch(requestUrl.toString(), {
-      method: "GET",
-      headers: { "Accept": "application/json" }
-    });
+    const url = new URL(WORKER_URL);
+    url.searchParams.set("maxResults", String(PAGE_SIZE));
+    const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
     const data = await response.json();
-
-    if (!response.ok || data.error) {
-      throw new Error(data.error || `Request failed (HTTP ${response.status}).`);
-    }
-
-    const videos = Array.isArray(data.videos) ? data.videos : [];
-    if (!append) grid.innerHTML = "";
-    renderVideos(videos);
-    nextPageToken = data.nextPageToken || "";
-
-    const count = grid.querySelectorAll(".video-card").length;
-    statusBox.textContent = count
-      ? `${count} video${count === 1 ? "" : "s"} loaded from the Secret Golf Tour playlist.`
-      : "No public videos were found in this playlist yet.";
-    if (loadMoreWrap) loadMoreWrap.hidden = !nextPageToken;
+    if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
+    state.videos = Array.isArray(data.videos) ? data.videos : [];
+    state.nextPageToken = data.nextPageToken || "";
+    mountCards(grid, state.videos);
+    fillCategorySections();
+    if (status) status.textContent = `${state.videos.length} videos loaded from the Secret Golf Tour playlist. Choose a thumbnail to play here on the website.`;
+    if (moreWrap) moreWrap.hidden = !state.nextPageToken;
+    if (help) help.hidden = true;
   } catch (error) {
-    console.error("Secret Golf Tour playlist error:", error);
-    statusBox.textContent = "We couldn't load the video list automatically.";
-    if (errorHelp) {
-      errorHelp.hidden = false;
-      const paragraph = errorHelp.querySelector("p");
-      if (paragraph) paragraph.textContent =
-        "Please check that the Cloudflare Worker is deployed and its YOUTUBE_API_KEY secret is configured.";
+    console.error("Playlist load error:", error);
+    if (status) status.textContent = "We couldn't load the playlist automatically right now.";
+    if (help) {
+      help.hidden = false;
+      const p = help.querySelector("p");
+      if (p) p.textContent = "Please check the Cloudflare Worker deployment and its YOUTUBE_API_KEY secret.";
     }
+    ["influencers-note", "lpga-note", "swing-note", "stories-note"].forEach(id => {
+      const note = document.getElementById(id);
+      if (note) note.textContent = "Playlist videos could not be loaded. Please try again later.";
+    });
   } finally {
-    loading = false;
+    state.loading = false;
   }
 }
-
 document.addEventListener("DOMContentLoaded", () => {
-  const yearElement = document.getElementById("year");
-  if (yearElement) yearElement.textContent = String(new Date().getFullYear());
-
+  const year = document.getElementById("year");
+  if (year) year.textContent = String(new Date().getFullYear());
   const menuButton = document.getElementById("menu-button");
-  if (menuButton) {
-    menuButton.addEventListener("click", () => {
-      const nav = document.querySelector("nav");
-      if (!nav) return;
-      const isOpen = nav.classList.toggle("open");
-      menuButton.setAttribute("aria-expanded", String(isOpen));
-    });
-  }
-
-  if (grid) {
-    grid.addEventListener("click", (event) => {
-      const button = event.target.closest(".play-inline-button");
-      if (button) playVideoInCard(button.closest(".video-card"));
-    });
-  }
-
-  const loadMoreButton = document.getElementById("load-more");
-  if (loadMoreButton) loadMoreButton.addEventListener("click", () => loadVideos(true));
-
-  if (!grid || !statusBox) {
-    console.error("The gallery HTML is missing #video-grid or #status.");
-    return;
-  }
-  loadVideos();
+  if (menuButton) menuButton.addEventListener("click", () => {
+    const nav = document.querySelector("nav");
+    if (nav) {
+      const open = nav.classList.toggle("open");
+      menuButton.setAttribute("aria-expanded", String(open));
+    }
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest(".play-inline-button");
+    if (button) playInCard(button.closest(".video-card"));
+  });
+  const more = document.getElementById("load-more");
+  if (more) more.addEventListener("click", async () => {
+    if (!state.nextPageToken || state.loading) return;
+    state.loading = true;
+    const status = document.getElementById("status");
+    try {
+      const url = new URL(WORKER_URL);
+      url.searchParams.set("maxResults", String(PAGE_SIZE));
+      url.searchParams.set("pageToken", state.nextPageToken);
+      const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
+      const newVideos = Array.isArray(data.videos) ? data.videos : [];
+      state.videos.push(...newVideos);
+      mountCards(document.getElementById("video-grid"), state.videos);
+      state.nextPageToken = data.nextPageToken || "";
+      fillCategorySections();
+      if (status) status.textContent = `${state.videos.length} videos loaded from the Secret Golf Tour playlist.`;
+      document.getElementById("load-more-wrap").hidden = !state.nextPageToken;
+    } catch (error) {
+      if (status) status.textContent = "Couldn't load more videos. Please try again.";
+    } finally {
+      state.loading = false;
+    }
+  });
+  loadPlaylist();
 });
